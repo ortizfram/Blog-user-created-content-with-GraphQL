@@ -1,1 +1,0 @@
-# Blog-user-created-content-with-GraphQL

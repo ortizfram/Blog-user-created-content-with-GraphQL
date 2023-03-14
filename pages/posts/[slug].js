@@ -1,13 +1,11 @@
-import styles from "../../styles/Slug.module.css";
-// importing dependencies
 import { GraphQLClient, gql } from "graphql-request";
+import styles from "../../styles/Slug.module.css";
+import moment from "moment";
 
-// API
 const graphcms = new GraphQLClient(
-  "https://api-sa-east-1.hygraph.com/v2/clf6r3qlm5z9n01t5061l3pnt/master"
+  "https://api-eu-west-2.graphcms.com/v2/cl21zpqgk4oep01xtflkm1vff/master"
 );
 
-// query specific post that slug matches
 const QUERY = gql`
   query Post($slug: String!) {
     post(where: { slug: $slug }) {
@@ -32,7 +30,6 @@ const QUERY = gql`
     }
   }
 `;
-
 const SLUGLIST = gql`
   {
     posts {
@@ -41,7 +38,6 @@ const SLUGLIST = gql`
   }
 `;
 
-// have access to post URL
 export async function getStaticPaths() {
   const { posts } = await graphcms.request(SLUGLIST);
   return {
@@ -50,32 +46,39 @@ export async function getStaticPaths() {
   };
 }
 
-// request the query and return statics posts
 export async function getStaticProps({ params }) {
   const slug = params.slug;
-  const { data } = await graphcms.request(QUERY, { slug });
-  console.log(data); // add this line to check the data object
-  const post = data?.post;
+  const data = await graphcms.request(QUERY, { slug });
+  const post = data.post;
   return {
     props: {
       post,
     },
-    revalidate: 10,
+    revalidate: 30,
   };
 }
 
 export default function BlogPost({ post }) {
   return (
     <main className={styles.blog}>
-      <img src={post.coverPhoto.url} className={styles.cover} alt="" />
+      <img
+        className={styles.cover}
+        src={post.coverPhoto.url}
+        alt={post.title}
+      />
       <div className={styles.title}>
-        <img src={post.author.avatar.url} alt="" />
-        <div className={styles.authtext}>
-          <h6>By {post.author.name}</h6>
-          <h6 className={styles.date}>{post.datePublished}</h6>
+        <div className={styles.authdetails}>
+          <img src={post.author.avatar.url} alt={post.author.name} />
+          <div className={styles.authtext}>
+            <h6>By {post.author.name} </h6>
+            <h6 className={styles.date}>
+              {moment(post.datePublished).format("MMMM d, YYYY")}
+            </h6>
+          </div>
         </div>
+        <h2>{post.title}</h2>
       </div>
-      <h2>{post.title}</h2>
+
       <div
         className={styles.content}
         dangerouslySetInnerHTML={{ __html: post.content.html }}
